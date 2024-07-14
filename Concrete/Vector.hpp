@@ -1,61 +1,107 @@
 #pragma once
 #include <initializer_list>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include <stdexcept>
+#include <vector>
+
 namespace algebra {
+
 
 class Vector {
 public:
     Vector() {}
     Vector(const Vector&copy) = delete;
-    Vector operator=(const Vector&copy) = delete;
+    virtual ~Vector() {}
 
-    virtual double &operator[](size_t) = 0;
+    Vector& operator=(const Vector&copy);
+    Vector& operator+=(const Vector&);
+    Vector& operator-=(const Vector&);
+    Vector& operator*=(double);
+    Vector& operator/=(double);
 
-    virtual size_t get_Size() = 0;
+    virtual double &operator[](std::size_t) = 0;
+    virtual double operator[](std::size_t) const = 0;
+
+    virtual std::size_t size() const = 0;
 };
+
 
 class Vector2 : public Vector {
 public:
     Vector2() {
         data[1] = data[0] = 0.0;
     }
+    ~Vector2() override = default;
 
     Vector2(double x, double y) : data{{x}, {y}} {}
+    Vector2(const double v[2]) : _x{v[0]}, _y{v[1]} {}
 
-    Vector2(const Vector2&copy) = default;
-    Vector2(const Vector2&&move) = default;
-    Vector2 &operator=(const Vector2&copy) = default;
+    Vector2(const Vector2&copy) : data{{copy._x}, {copy._y}} {}
+    Vector2(Vector2&&move) = default;
+    Vector2 &operator=(const Vector2&copy)
+    {
+        _x = copy._x;
+        _y = copy._y;
+        return *this;
+    }
     Vector2 &operator=(Vector2&&move) = default;
 
-    constexpr size_t get_Size() { return 2; }
+    constexpr std::size_t size() const { return 2; }
 
-    double &operator[](size_t i) override { return data[i]; }
-private:
-    double data[2];
-};
+    double &operator[](std::size_t i) override { return data[i]; }
+    double operator[](std::size_t i) const override { return data[i]; }
 
-class MatrixVector : public Vector {
-public:
-    MatrixVector(double *p, size_t n) : data(p), size(n) {}
-
-    MatrixVector(const MatrixVector&copy) = default;
-    MatrixVector(const MatrixVector&&move) = default;
-    MatrixVector &operator=(const MatrixVector&copy) = default;
-    MatrixVector &operator=(MatrixVector&&move) = default;
-
-    double &operator[](size_t i) override {
-        if (i >= size)
-            throw std::range_error("Index out of bounds");
-
-        return data[i];
+    inline double dot(const Vector2 &v) const
+    {
+        return _x * v._x + _y * v._y;
     }
 
-    size_t get_Size() override { return size; }
+    inline double norm() const {
+        return sqrt(_x * _x + _y * _y);
+    }
+    Vector2& normalized();
 
+    inline double angle() const { return atan2(_y, _x); }
+    inline double angle_to(const Vector2 &v) const
+    {
+        return acos(dot(v) / (norm() * v.norm()));
+    }
+
+    inline double& x() { return _x; }
+    inline double& y() { return _y; }
+    inline double x() const { return _x; }
+    inline double y() const { return _y; }
 private:
-    double *const data;
-    size_t size;
+    union {
+        double data[2];
+        struct {
+            double _x;
+            double _y;
+        };
+    };
 };
 
+
+inline Vector2 operator+(const Vector2& u, const Vector2& v)
+{
+    return {u.x() + v.x(), u.y() + v.y()};
 }
+inline Vector2 operator-(const Vector2& u, const Vector2& v)
+{
+    return {u.x() - v.x(), u.y() - v.y()};
+}
+inline Vector2 operator*(const Vector2& u, double scalar)
+{
+    return {u.x() * scalar, u.y() * scalar};
+}
+inline Vector2 operator/(const Vector2& u, double scalar)
+{
+    return {u.x() / scalar, u.y() / scalar};
+}
+
+inline Vector2 operator*(double scalar, const Vector2& u) { return u * scalar; }
+inline Vector2 operator/(double scalar, const Vector2& u) { return u / scalar; }
+
+
+} // namespace algebra
