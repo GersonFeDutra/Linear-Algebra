@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <vector>
+#include <iostream>
 
 namespace algebra {
 
@@ -24,6 +25,8 @@ public:
     virtual double operator[](std::size_t) const = 0;
 
     virtual std::size_t size() const = 0;
+
+    friend std::ostream& operator<<(std::ostream& os, const Vector& v);
 };
 
 
@@ -66,6 +69,11 @@ public:
     inline double angle_to(const Vector2 &v) const
     {
         return acos(dot(v) / (norm() * v.norm()));
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Vector2& v)
+    {
+        return os << '(' << v._x << ", " << v._y << ')';
     }
 
     inline double& x() { return _x; }

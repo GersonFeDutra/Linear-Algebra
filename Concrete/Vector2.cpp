@@ -12,5 +12,4 @@ Vector2& Vector2::normalized()
     return *this;
 }
 
-
 } // namespace algebra

@@ -10,62 +10,26 @@ using namespace algebra;
 
 void print_sized(Vector &v, const char *name)
 {
-    std::cout << name << '[' << v.size() << ']' << ": (";
-
-    std::size_t i;
-    for (i = 0; i < v.size() - 1; i++)
-        std::cout << v[i] << ", ";
-
-    std::cout << v[i] << ")\n";
+    std::cout << name << '[' << v.size() << "]: " << v << '\n';
 }
 
 
 void print_sized(Matrix &M, const char *name)
 {
-    std::cout << name << '[' << M.get_m() << 'x' << M.get_n() << ']' << ": ";
-
-    std::cout << "[\n";
-
-    for (std::size_t i = 0; i < M.get_m(); i++) {
-        std::cout << "(";
-
-        if (M.get_n())
-            std::cout << M.get(i, 0);
-
-        for (std::size_t j = 1; j < M.get_n(); j++)
-            std::cout << ", " << M.get(i, j);
-
-        std::cout << ")\n";
-    }
-    std::cout << "]\n";
+    std::cout << name << '[' << M.get_m() << 'x' << M.get_n() << ']' \
+            << ": " << M << '\n';
 }
 
 
 void print(Vector &v, const char *name)
 {
-    std::cout << name << ": (";
-
-    std::size_t i;
-    for (i = 0; i < v.size() - 1; i++)
-        std::cout << v[i] << ", ";
-
-    std::cout << v[i] << ")\n";
+    std::cout << name << ": " << v << '\n';
 }
 
 
 void print(Matrix &M, const char *name)
 {
-    std::cout << name << ": [\n";
-
-    for (std::size_t i = 0; i < M.get_m(); i++) {
-        if (M.get_n())
-            std::cout << '(' << M.get(i, 0);
-        for (std::size_t j = 1; j < M.get_n(); j++)
-            std::cout << ", " << M.get(i, j);
-        std::cout << ")\n";
-    }
-
-    std::cout << "]\n";
+    std::cout << name << ": [\n" << M << '\n';
 }
 
 
@@ -77,10 +41,8 @@ inline void print(Vector2 v, const char *name)
 
 inline void print(Matrix2 M, const char *name)
 {
-    std::cout << name << ": " \
-        << "[\n(" << M.x1() << ", " << M.y1() << ')' \
-        << "\n(" << M.x2() << ", " << M.y2() \
-        << ")], det(" << name << ")=" << M.determinant() << "\n";
+    std::cout << name << ": " << M << \
+            ", det(" << name << ")=" << M.determinant() << "\n";
 }
 
 
@@ -166,7 +128,6 @@ void use(Matrix2 M, Matrix2 N, Matrix2 P)
     print(M - N, "M - N");
     print(2 * P, "2P");
     print((M + N) / 1.5 - P, "(M + N) / 1.5 - P");
-    std::cout << "M: " << M.x1() << ", " << M.y1() << ", " << M.x2() << ", " << M.y2() << '\n';
     print(M.inverse(), "M^-1");
     Matrix2 P_inv = P;
     P_inv.invert();

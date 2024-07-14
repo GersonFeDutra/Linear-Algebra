@@ -1,0 +1,77 @@
+
+
+/* Immutable abstract matrix for data fetching
+class AbstractMatrix
+{
+public:
+    AbstractMatrix() {}
+    virtual ~AbstractMatrix() {}
+
+    AbstractMatrix(const AbstractMatrix&copy) = delete;
+
+    virtual const MatrixVector operator[](std::size_t i) const = 0;
+
+    virtual std::size_t get_m() const = 0;
+    virtual std::size_t get_n() const = 0;
+
+    virtual double get(std::size_t i, std::size_t j) const = 0;
+};
+
+
+/* Mutable abstract matrix */
+
+
+class MatrixFunction : public Matrix
+{
+private:
+    double *(* f)(double i, double j);
+    // limits
+    std::size_t m = 0; // rows
+    std::size_t n = 0; // cols
+    MatrixMxN *mutation = nullptr;
+    double scalar = 1;
+public:
+    MatrixFunction();
+    virtual MatrixVector operator[](std::size_t i)
+    {
+        if (!mutation)
+            mutation = new MatrixMxN{m, n};
+        return (*mutation)[i];
+    }
+
+    virtual const MatrixVector operator[](std::size_t i) const
+    {
+        if (!mutation)
+            return {nullptr, n};
+        return (*mutation)[i];
+    }
+
+    std::size_t get_m() const override { return m; }
+    std::size_t get_n() const override { return n; }
+
+    double& get(std::size_t i, std::size_t j)
+    {
+        if (!mutation)
+            mutation = new MatrixMxN{m, n};
+        return f(m, n) + mutation->get(m, n);
+    }
+    double get(std::size_t i, std::size_t j) const
+    {
+        if (!mutation)
+            return 0;
+        return f(m, n) + mutation->get(m, n);
+    }
+
+};
+
+double get(const AbstractMatrix& from, std::size_t i, std::size_t j)
+{
+    return from.get(i, j);
+}
+
+MatrixMxN make_from(const MatrixFunction& M)
+{
+    return MatrixMxN{
+        M.get_m(), M.get_n(),
+        [const &](size_t i, size_t j){get(M, i, j)}()};
+}

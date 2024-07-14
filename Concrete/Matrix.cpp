@@ -64,4 +64,17 @@ Matrix& Matrix::operator/=(double scalar)
 }
 
 
+std::ostream& operator<<(std::ostream& os, const Matrix& M)
+{
+    os << "[\n";
+    for (std::size_t i = 0; i < M.get_m(); i++) {
+        MatrixVector row = M[i];
+        os << M[i] << '\n';
+    }
+    os << ']';
+
+    return os;
+}
+
+
 } // namespace algebra

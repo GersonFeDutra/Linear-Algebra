@@ -70,5 +70,17 @@ Vector& Vector::operator/=(double scalar)
     return a;
 }
 
+std::ostream& operator<<(std::ostream& os, const Vector& v)
+{
+    os << '(';
+    if (v.size() > 0)
+        os << v[0];
+    for (std::size_t i = 0; i < v.size(); i++)
+        os << ", " << v[i];
+    os << ')';
+
+    return os;
+}
+
 
 } // namespace algebra

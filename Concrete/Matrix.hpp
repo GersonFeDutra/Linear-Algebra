@@ -5,6 +5,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <functional>
+#include <iostream>
 
 namespace algebra {
 
@@ -82,6 +83,8 @@ public:
 
     virtual double& get(std::size_t i, std::size_t j) = 0;
     virtual double get(std::size_t i, std::size_t j) const = 0;
+
+    friend std::ostream& operator<<(std::ostream& os, const Matrix& M);
 };
 
 
@@ -192,6 +195,12 @@ public:
     void invert() override;
     inline Matrix2 inverse() { return {{_y2, -_y1}, {-_x2, _x1}}; }
     inline double dot(const Matrix &b) { return _x1 * _y1 + _x2 * _y2; }
+
+    friend std::ostream& operator<<(std::ostream& os, const Matrix2& v)
+    {
+        return os << "[\n(" << v._x1 << ", " << v._y1 << ")\n" \
+                << v._x2 << ", " << v._y2 << ")\n]";
+    }
 
     inline double& x1() { return _x1; }
     inline double& x2() { return _x2; }
