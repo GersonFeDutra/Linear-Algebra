@@ -28,20 +28,65 @@ public:
 
         return data[i];
     }
-    double operator[](std::size_t i) const override {
+    const double& operator[](std::size_t i) const override {
         if (i >= _size)
             throw std::range_error("Index out of bounds");
 
-        return data ? data[i] : 0;
+        return data[i];
     }
 
     std::size_t size() const override { return _size; }
 
-private:
-    double *const data;
+    friend bool operator==(const MatrixVector& a, const MatrixVector& b) { return a.data == b.data; }
+    friend bool operator!=(const MatrixVector& a, const MatrixVector& b) { return !(a.data == b.data); }
+    friend bool operator<=(const MatrixVector& a, const MatrixVector& b) { return a.data <= b.data; }
+    friend bool operator>=(const MatrixVector& a, const MatrixVector& b) { return a.data >= b.data; }
+    friend bool operator<(const MatrixVector& a, const MatrixVector& b) { return a.data < b.data; }
+    friend bool operator>(const MatrixVector& a, const MatrixVector& b) { return a.data > b.data; }
+protected:
+    mutable double* data;
     std::size_t _size;
 };
 
+
+class MatrixIterator : public MatrixVector {
+public:
+    MatrixIterator(double *p, std::size_t n) : MatrixVector{p, n} {}
+
+    // Iterator operators
+    const MatrixIterator& operator++() const
+    {
+        data += _size;
+        return *this;
+    }
+    const MatrixIterator operator++(int) const
+    {
+        MatrixIterator iterator = *this;
+        data += _size;
+        return iterator;
+    }
+    const MatrixIterator& operator--() const
+    {
+        data -= _size;
+        return *this;
+    }
+    const MatrixIterator operator--(int) const
+    {
+        MatrixIterator iterator = *this;
+        data -= _size;
+        return iterator;
+    }
+    const MatrixIterator operator+(std::size_t offset) const
+    {
+        return {data + (offset * _size), _size};
+    }
+    const MatrixIterator operator-(std::size_t offset) const
+    {
+        return {data - (offset * _size), _size};
+    }
+    double& operator*() { return *data; }
+    const double& operator*() const { return *data; }
+};
 
 /*
  * M_(m* x n*) = [m_ij];
@@ -65,6 +110,8 @@ private:
  */
 class Matrix {
 public:
+    using Iterator = MatrixIterator;
+public:
     Matrix() {}
     virtual ~Matrix() {}
     Matrix(const Matrix&copy) = delete;
@@ -77,6 +124,12 @@ public:
 
     virtual MatrixVector operator[](std::size_t i) = 0;
     virtual const MatrixVector operator[](std::size_t i) const = 0;
+
+    virtual Iterator begin() = 0;
+    virtual Iterator end() = 0;
+    virtual const Iterator begin() const = 0;
+    virtual const Iterator end() const = 0;
+    std::size_t size() const { return get_m(); }; // Used by iterators
 
     virtual std::size_t get_m() const = 0;
     virtual std::size_t get_n() const = 0;
@@ -118,6 +171,11 @@ public:
         return {data + i * n, m};
     }
 
+    Iterator begin() override { return {data, n}; };
+    Iterator end() override { return {data + m * n, n}; };
+    const Iterator begin() const override { return {data, n}; };
+    const Iterator end() const override { return {data + m * n, n}; };
+
     MatrixMxN& transpose();
 
     std::size_t get_m() const override { return m; }
@@ -133,14 +191,12 @@ public:
     }
 };
 
-
 MatrixMxN operator+(const Matrix&, const Matrix&);
 MatrixMxN operator-(const Matrix&, const Matrix&);
 MatrixMxN operator*(const Matrix&, double);
 MatrixMxN operator/(const Matrix&, double);
 MatrixMxN mul(const Matrix&, const Matrix&);
 MatrixMxN transposed(const Matrix&);
-
 
 
 class MatrixN : public Matrix {
@@ -178,6 +234,11 @@ public:
     {
         return {const_cast<double *>(data + 2 * i), (std::size_t)2};
     }
+
+    Iterator begin() override { return {data, 2}; };
+    Iterator end() override { return {data + 4, 2}; };
+    const Iterator begin() const override { return {const_cast<double *>(data), 2}; };
+    const Iterator end() const override { return {const_cast<double *>(data) + 4, 2}; };
 
     constexpr std::size_t get_m() const override { return 2; }
     constexpr std::size_t get_n() const override { return 2; }

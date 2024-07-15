@@ -50,8 +50,8 @@ Vector& Vector::operator*=(double scalar)
     if (a.size() != size())
         throw std::range_error("Vectors sizes differ.");
 
-    for (std::size_t i = 0; i < size(); i++)
-        a[i] *= scalar;
+    for (auto& el : *this)
+        el *= scalar;
 
     return a;
 }
@@ -64,19 +64,21 @@ Vector& Vector::operator/=(double scalar)
     if (a.size() != size())
         throw std::range_error("Vectors sizes differ.");
 
-    for (std::size_t i = 0; i < size(); i++)
-        a[i] /= scalar;
+    for (auto& el : *this)
+        el /= scalar;
 
     return a;
 }
 
+
 std::ostream& operator<<(std::ostream& os, const Vector& v)
 {
     os << '(';
+    const double *it;
     if (v.size() > 0)
-        os << v[0];
-    for (std::size_t i = 0; i < v.size(); i++)
-        os << ", " << v[i];
+        os << *(it = v.begin());
+    for (++it; it < v.end(); it++)
+        os << ", " << *it;
     os << ')';
 
     return os;

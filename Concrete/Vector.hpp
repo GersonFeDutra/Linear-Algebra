@@ -22,9 +22,15 @@ public:
     Vector& operator/=(double);
 
     virtual double &operator[](std::size_t) = 0;
-    virtual double operator[](std::size_t) const = 0;
+    virtual const double& operator[](std::size_t) const = 0;
 
     virtual std::size_t size() const = 0;
+
+    double* begin() { return {&(*this)[0]}; }
+    double* end() { return {&(*this)[0] + size()}; }
+
+    const double* begin() const { return &((*this)[0]); }
+    const double* end() const { return &((*this)[0]) + size(); }
 
     friend std::ostream& operator<<(std::ostream& os, const Vector& v);
 };
@@ -52,17 +58,12 @@ public:
 
     constexpr std::size_t size() const { return 2; }
 
-    double &operator[](std::size_t i) override { return data[i]; }
-    double operator[](std::size_t i) const override { return data[i]; }
+    double& operator[](std::size_t i) override { return data[i]; }
+    const double& operator[](std::size_t i) const override { return data[i]; }
 
-    inline double dot(const Vector2 &v) const
-    {
-        return _x * v._x + _y * v._y;
-    }
+    inline double dot(const Vector2 &v) const { return _x * v._x + _y * v._y; }
+    inline double norm() const { return sqrt(_x * _x + _y * _y); }
 
-    inline double norm() const {
-        return sqrt(_x * _x + _y * _y);
-    }
     Vector2& normalized();
 
     inline double angle() const { return atan2(_y, _x); }
