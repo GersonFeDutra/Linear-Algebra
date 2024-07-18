@@ -8,38 +8,33 @@
 using namespace algebra;
 
 
-void print_sized(Vector &v, const char *name)
+inline void print_sized(const Vector &v, const char *name)
 {
     std::cout << name << '[' << v.size() << "]: " << v << '\n';
 }
 
-
-void print_sized(Matrix &M, const char *name)
+inline void print_sized(const Matrix &M, const char *name)
 {
     std::cout << name << '[' << M.get_m() << 'x' << M.get_n() << ']' \
             << ": " << M << '\n';
 }
 
-
-void print(Vector &v, const char *name)
+inline void print(const Vector &v, const char *name)
 {
     std::cout << name << ": " << v << '\n';
 }
 
-
-void print(Matrix &M, const char *name)
+inline void print(const Matrix &M, const char *name)
 {
     std::cout << name << ": [\n" << M << '\n';
 }
 
-
-inline void print(Vector2 v, const char *name)
+inline void print(const Vector2 v, const char *name)
 {
-    std::cout << name << ": (" << v.x() << ", " << v.y() << ")\n";
+    std::cout << name << ": " << v << '\n';
 }
 
-
-inline void print(Matrix2 M, const char *name)
+inline void print(const Matrix2& M, const char *name)
 {
     std::cout << name << ": " << M << \
             ", det(" << name << ")=" << M.determinant() << "\n";
@@ -101,7 +96,7 @@ void use(Matrix &M, Matrix &N, Matrix &P)
         print(P, s);
     }
     catch (std::range_error err) {
-        std::cerr << err.what() << '\n';
+        std::cerr << s << ": " << err.what() << '\n';
     }
 }
 
@@ -132,7 +127,7 @@ void use(Matrix2 M, Matrix2 N, Matrix2 P)
     Matrix2 P_inv = P;
     P_inv.invert();
     print(P_inv, "P^-1");
-    print(mul(P, P_inv), "PP^-1 = I");
+    print(multiply(P, P_inv), "PP^-1 = I");
 }
 
 
@@ -185,7 +180,7 @@ int main()
     print_sized(R, "R");
 
     try {
-        MatrixMxN res = mul(R, Q);
+        MatrixMxN res = multiply(R, Q);
         print_sized(res, "RQ");
     }
     catch (std::range_error err) {

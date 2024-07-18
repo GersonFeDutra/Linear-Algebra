@@ -114,9 +114,6 @@ MatrixMxN& MatrixMxN::transpose()
     else {
         double *new_data = new double[m * n];
 
-        for (std::size_t k = 0; k < m * n; k++)
-            new_data[k] = 0;
-
         for(std::size_t k = 0; k < m * n; k++) {
             std::size_t i = k / m;
             std::size_t j = k % m;
@@ -209,7 +206,7 @@ MatrixMxN operator/(const Matrix& M, double scalar)
 }
 
 
-MatrixMxN mul(const Matrix& A, const Matrix& B)
+MatrixMxN multiply(const Matrix& A, const Matrix& B)
 {
     if (A.get_n() != B.get_m())
         throw std::range_error(

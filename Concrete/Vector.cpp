@@ -71,6 +71,15 @@ Vector& Vector::operator/=(double scalar)
 }
 
 
+Vector& Vector::operator-()
+{
+    for (auto& el : *this)
+        el *= -1;
+
+    return *this;
+}
+
+
 std::ostream& operator<<(std::ostream& os, const Vector& v)
 {
     os << '(';

@@ -20,6 +20,8 @@ public:
     Vector& operator-=(const Vector&);
     Vector& operator*=(double);
     Vector& operator/=(double);
+	Vector& operator+() { return *this; };
+	Vector& operator-();
 
     virtual double &operator[](std::size_t) = 0;
     virtual const double& operator[](std::size_t) const = 0;
@@ -33,6 +35,42 @@ public:
     const double* end() const { return &((*this)[0]) + size(); }
 
     friend std::ostream& operator<<(std::ostream& os, const Vector& v);
+};
+
+
+class VectorN : public Vector
+{
+private:
+    std::size_t n = 0;
+    double *data = nullptr;
+public:
+    VectorN(std::size_t n) : n{n}, data{new double[n]}
+    {
+        for (std::size_t i = 0; i < n; i++)
+            data[i] = 0;
+    }
+    VectorN(std::initializer_list<double> il) : n{il.size()}, data{new double[il.size()]}
+    {
+        std::size_t i = 0;
+        for (double el : il)
+            data[i++] = el;
+    }
+    VectorN(std::size_t n, double (* f)(std::size_t i)) : n{n}, data{new double[n]}
+    {
+        for (std::size_t i = 0; i < n; i++)
+            data[i] = f(i);
+    }
+
+    ~VectorN() override
+    {
+        delete[] data;
+        data = nullptr;
+    }
+
+    double &operator[](std::size_t i) override { return *(data + i); }
+    const double& operator[](std::size_t i) const override { return *(data + i); }
+
+    std::size_t size() const override { return n; }
 };
 
 

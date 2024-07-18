@@ -195,7 +195,7 @@ MatrixMxN operator+(const Matrix&, const Matrix&);
 MatrixMxN operator-(const Matrix&, const Matrix&);
 MatrixMxN operator*(const Matrix&, double);
 MatrixMxN operator/(const Matrix&, double);
-MatrixMxN mul(const Matrix&, const Matrix&);
+MatrixMxN multiply(const Matrix&, const Matrix&);
 MatrixMxN transposed(const Matrix&);
 
 
@@ -207,6 +207,8 @@ public:
     virtual void invert() = 0;
 
     virtual MatrixN& transpose();
+
+	class matrix_determinant_error : public std::exception {};
 };
 
 
@@ -254,8 +256,17 @@ public:
 
     double determinant() const override { return _x1 * _y2 - _x2 * _y1; }
     void invert() override;
-    inline Matrix2 inverse() { return {{_y2, -_y1}, {-_x2, _x1}}; }
-    inline double dot(const Matrix &b) { return _x1 * _y1 + _x2 * _y2; }
+    inline Matrix2 adjoint() { return {{_y2, -_y1}, {-_x2, _x1}}; }
+    inline Matrix2 inverse()
+    {
+        double det = determinant();
+        if (det == 0)
+            throw MatrixN::matrix_determinant_error();
+        Matrix2 adj = adjoint();
+        adj *= 1 / det;
+        return adj;
+    }
+    inline double dot() { return _x1 * _y1 + _x2 * _y2; }
 
     friend std::ostream& operator<<(std::ostream& os, const Matrix2& v)
     {
@@ -312,7 +323,7 @@ inline Matrix2 operator/(const Matrix2& M, double scalar)
 inline Matrix2 operator*(double scalar, const Matrix2& M) { return M * scalar; }
 inline Matrix2 operator/(double scalar, const Matrix2& M) { return M / scalar; }
 
-inline Matrix2 mul(const Matrix2& A, const Matrix2& B)
+inline Matrix2 multiply(const Matrix2& A, const Matrix2& B)
 {
     return {
         { A.x1() * B.x1() + A.y1() * B.x2(),
