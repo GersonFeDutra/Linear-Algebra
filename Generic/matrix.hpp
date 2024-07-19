@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <functional>
+#include <stdexcept>
 #include "vector.hpp"
 
 namespace algebra {
@@ -194,7 +195,7 @@ public:
 };
 
 
-/*
+/* Matrix
  * M_(m* x n*) = [m_ij];
  * m*: row, n*: col;
  * m: row-1, n: row-1
@@ -223,9 +224,21 @@ protected: // Attributes
 	// Use union to store 2 data formats (single-vector) and (raw array)
 	// Use casting to access individual vectors
 	T matrix[M * N];
-public:
+
+public: // Aliases
+	using value_type = T;
+
+public: // Constexpr's
 	constexpr std::size_t get_m() const { return M; }
 	constexpr std::size_t get_n() const { return N; }
+	constexpr bool is_square() const { return M == N; }
+
+public: // Wrappers
+	constexpr std::size_t size() const { return M * N; }
+	constexpr T *begin() { return matrix; }
+	constexpr T *end() { return matrix + M * N; }
+	constexpr const T *begin() const { return matrix; }
+	constexpr const T *end() const { return matrix + M * N; }
 
 public: // Constructors
 	Matrix()
@@ -233,6 +246,7 @@ public: // Constructors
 		for (T *p = matrix; p < matrix + M * N; p++)
 			*p = 0;
 	}
+
 	Matrix(std::initializer_list<std::initializer_list<T>> list)
 	{
 		if (M == 0)
@@ -268,9 +282,6 @@ public: // Constructors
 
 	Matrix(const std::function<T(std::size_t, std::size_t)>& f) { fill(f); }
 
-public: // Constexpr's
-	constexpr bool is_square() const { return M == N; }
-
 public: // Helpers
 	Matrix& fill(const std::function<T(std::size_t, std::size_t)>& f)
 	{
@@ -285,13 +296,121 @@ public: // Accessors
 	T& get(std::size_t i, std::size_t j) { return *(matrix + i * N + j); }
 	T get(std::size_t i, std::size_t j) const { return *(matrix + i * N + j); }
 
-	T *begin() { return matrix; }
-	T *end() { return matrix + M * N; }
-	const T *begin() const { return matrix; }
-	const T *end() const { return matrix + M * N; }
-
 public: // Features
 	Matrix<T, N, M> *transposed() const { return transposed(*this); }
+
+public: // Square Matrix Features
+    // Conditionally define the methods only if M == N
+
+    template<std::size_t U = M, std::size_t V = N>
+    std::enable_if_t<U == V, T> get_determinant() const {
+        // This is a simple 2x2 determinant calculation for demonstration.
+        // In a real implementation, you would need a full determinant calculation.
+        if constexpr (N == 2) { // Matrix 2
+			return matrix[0] * matrix[3] - matrix[1] * matrix[2];
+        } else {
+			// TODO -> Implement
+			// TODO -> Use a more efficient algorithm
+			// FIXME -> use dynamic array here
+			//return __helper_methods::__laplace_det(Matrix<T, N, N>::matrix, N).det;
+            throw std::runtime_error("Determinant calculation for larger matrices is not implemented.");
+			return 0;
+        }
+    }
+
+	template<std::size_t U = M, std::size_t V = N>
+    std::enable_if_t<U == V, T>& transpose()
+	{
+		if constexpr(N == 2) { // Matrix2
+			std::swap(Matrix<T, 2, 2>::get(0, 1), Matrix<T, 2, 2>::get(1, 0));
+		}
+		else {
+			for (std::size_t i = 0; i < N; i++)
+				for (std::size_t j = i + 1; j < N; j++)
+					std::swap(Matrix<T, N, N>::get(i, j), Matrix<T, N, N>::get(j, i));
+		}
+		return *this;
+	}
+
+	template<std::size_t U = M, std::size_t V = N>
+    std::enable_if_t<U == V, T>& invert()
+	{
+		if constexpr(N == 2)
+		{
+			T scalar = get_determinant();
+
+			if (scalar == 0)
+				throw matrix_determinant_error();
+
+			scalar = 1 / scalar;
+			// swap multiply
+			T tmp = get(0, 0) * scalar;
+			get(0, 0) = get(1, 1) * scalar;
+			get(1, 1) = tmp;
+
+			get(0, 1) *= -scalar;
+			get(1, 0) *= -scalar;
+		}
+		else
+		{
+			//*this = get_inverse();
+			throw std::runtime_error("Inversion function calculation for larger matrices is not implemented.");
+		}
+
+		return *this;
+	}
+
+	template<std::size_t U = M, std::size_t V = N>
+    std::enable_if_t<U == V, T> get_adjoint()
+	{
+		if constexpr(N == 2) {
+			return {
+				{ matrix[3], -matrix[1] },
+				{ -matrix[2], matrix[0] },
+			};
+		}
+		else {
+			throw std::runtime_error("Adjoint not implemented for larger matrices.");
+			// TODO -> Implement
+			return {
+				[this](std::size_t i, std::size_t j) {
+					//return (((i + j) & 0b1) ? -1 : 1) * this->get(j, i);
+					return 0;
+				}
+			};
+		}
+	}
+
+	// TODO -> Usar algoritmo otimizado
+	template<std::size_t U = M, std::size_t V = N>
+    std::enable_if_t<U == V, T> get_inverse()
+	{
+		T det = get_determinant();
+		if (det == 0)
+			throw matrix_determinant_error();
+
+		Matrix<T, N, N> adj = get_adjoint();
+		adj *= 1 / det;
+
+		return adj;
+	}
+	
+	template<std::size_t COLS = N>
+    typename std::enable_if<COLS == 2, T>::type dot() const
+	{
+		if constexpr(M == 2) { // Matrix2
+			return matrix[0] * matrix[1] + matrix[2] * matrix[3];
+		}
+		else {
+			T total = 0;
+			for (double *p = matrix, *q = matrix + 1; q < matrix + M * N; p += 2, q += 2)
+				total = *p + *q;
+			return total;
+		}
+	}
+
+public: // Sub-classes
+	class matrix_determinant_error : public std::exception {};
 
 public: // Operators
 	T *operator[](const std::size_t i) { return (T[N])(matrix + i * N); }
@@ -353,6 +472,11 @@ public: // Operators
 	}
 };
 
+template <class T, std::size_t N> using MatrixN = Matrix<T, N, N>;
+template <class T> using Matrix2 = MatrixN<T, 2>;
+template <class T> using Matrix3 = MatrixN<T, 3>;
+template <class T> using Matrix4 = MatrixN<T, 4>;
+
 // TODO -> Helper function to create a matrix and deduce M and N.
 // template <typename T>
 // auto make_matrix(std::initializer_list<std::initializer_list<T>> init)
@@ -362,7 +486,6 @@ public: // Operators
 //     return Matrix<T, M, N>(init);
 // }
 
-// TODO -> Use concepts to avoid type repetitions on specifications
 template<typename T, std::size_t M, std::size_t N>
 Matrix<T, M, N> operator+(const Matrix<T, M, N>& a, const Matrix<T, M, N>& b)
 {
@@ -391,10 +514,12 @@ Matrix<T, M, N> operator*(const Matrix<T, M, N>& m, T scalar)
 	};
 }
 template<typename T, std::size_t M, std::size_t N>
-Matrix<T, M, N> operator*(T scalar, const Matrix<T, M, N>& m)
+inline Matrix<T, M, N> operator*(T scalar, const Matrix<T, M, N>& m)
 {
 	return m * scalar;
 }
+
+
 template<typename T, std::size_t M, std::size_t N>
 Matrix<T, M, N> operator/(const Matrix<T, M, N>& m, T scalar)
 {
@@ -432,11 +557,13 @@ Matrix<bool, M, N> operator!=(const Matrix<T, M, N>& a, const Matrix<T, M, N>& b
 	};
 }
 
+
 template <typename T, std::size_t M, std::size_t N, std::size_t P>
 Matrix<T, M, P> multiply(const Matrix<T, M, N>& m, const Matrix<T, N, P>& n)
 {
 	// DEBUG -> Check rightness
 	// TODO -> usar algoritmo otimizado
+
 	return {
 		[&m, &n](std::size_t i, std::size_t j) {
 			T e = 0;
@@ -455,6 +582,30 @@ Matrix<T, N, M> transposed(const Matrix<T, M, N>& m)
 			return m.get(M - i - 1, N - j - 1);
 		}
 	};
+}
+
+
+// "Inverted" function, available only if M == N
+template<typename T, std::size_t N>
+MatrixN<T, N> inverted(const MatrixN<T, N>& m)
+{
+	if constexpr(N == 2) {
+		T scalar = m.get_determinant();
+		if (scalar == 0)
+			throw MatrixN<T, N>::matrix_determinant_error();
+		scalar = 1 / scalar;
+
+		return {
+			{ m.get(1, 1) * scalar, m.get(0, 1) * -scalar },
+			{ m.get(1, 0) * -scalar, m.get(0, 0) * scalar },
+		};
+	}
+	else {
+		throw std::runtime_error("Inversion for larger matrices is not implemented!");
+		return MatrixN<T, N>{
+			// TODO -> Implement
+		};
+	}
 }
 
 
@@ -514,271 +665,16 @@ static __laplace_res __laplace_det(const T *M, std::size_t n) noexcept
 } // namespace __helper_methods
 
 
-template <class T, std::size_t N> class SquareMatrix : public Matrix<T, N, N>
-{
-public:
-	constexpr std::size_t get_m() const { return N; }
-	constexpr std::size_t get_n() const { return N; }
-	constexpr std::size_t size() const { return N * N; }
-	constexpr bool is_square() const { return true; }
-
-public:
-	SquareMatrix() : Matrix<T, N, N>() {}
-	SquareMatrix(std::initializer_list<std::initializer_list<T>> il) : Matrix<T, N, N>(il) {}
-	SquareMatrix(std::initializer_list<Vector<T, N>> il) : Matrix<T, N, N>(il) {}
-	SquareMatrix(const std::function<T(std::size_t, std::size_t)>& f) : Matrix<T, N, N>(f) {}
-
-public: // Features
-	SquareMatrix& transpose()
-	{
-		for (std::size_t i = 0; i < N; i++)
-			for (std::size_t j = i + 1; j < N; j++)
-				std::swap(Matrix<T, N, N>::get(i, j), Matrix<T, N, N>::get(j, i));
-		return *this;
-	}
-	SquareMatrix& invert()
-	{
-		*this = get_inverse();
-		return *this;
-	}
-
-	// TODO -> Implement
-	T get_determinant() const
-	{
-		// TODO -> Use a more efficient algorithm
-		// FIXME -> use dynamic array here
-		//return __helper_methods::__laplace_det(Matrix<T, N, N>::matrix, N).det;
-		return 0;
-	}
-
-	SquareMatrix<T, N> get_adjoint()
-	{
-		return {
-			[this](std::size_t i, std::size_t j) {
-				// TODO -> Implement
-				// FIXME
-				//return (((i + j) & 0b1) ? -1 : 1) * this->get(j, i);
-				return 0;
-			}
-		};
-	}
-
-	class matrix_determinant_error : public std::exception {};
-
-	// TODO -> Usar algoritmo otimizado
-	SquareMatrix get_inverse()
-	{
-		T det = get_determinant();
-		if (det == 0)
-			throw matrix_determinant_error();
-
-		SquareMatrix adj = get_adjoint();
-		adj *= 1 / det;
-
-		return adj;
-	}
-};
-
-template <typename T, std::size_t M, std::size_t N>
-constexpr Matrix<T, M, N> operator*(T scalar, Matrix<T, M, N> &m)
-{
-	return m * scalar;
-}
-
-template <typename T, std::size_t N>
-SquareMatrix<T, N> multiply(const SquareMatrix<T, N>& m, const SquareMatrix<T, N>& n)
-{
-	// DEBUG -> Check rightness
-	// TODO -> usar algoritmo otimizado
-	return {
-		[&m, &n](std::size_t i, std::size_t j) {
-			T e = 0;
-			for (std::size_t k = 0; k < N; k++)
-				e += m.get(i, k) * n.get(k, j);
-			return e;
-		}
-	};
-}
-
-template <typename T, std::size_t N, std::size_t P>
-SquareMatrix<T, N> multiply(const Matrix<T, N, P>& m, const Matrix<T, P, N>& n)
-{
-	// DEBUG -> Check rightness
-	// TODO -> usar algoritmo otimizado
-	return {
-		[&m, &n](std::size_t i, std::size_t j) {
-			T e = 0;
-			for (std::size_t k = 0; k < N; k++)
-				e += m.get(i, k) * n.get(k, j);
-			return e;
-		}
-	};
-}
-
-template<typename T, std::size_t N>
-SquareMatrix<T, N> transposed(const SquareMatrix<T, N>& m)
-{
-	return {
-		[&m](std::size_t i, std::size_t j){
-			return m.get(N - i - 1, N - j - 1);
-		}
-	};
-}
-
-template<typename T, std::size_t N>
-auto inverted(const SquareMatrix<T, N>& m)
-{
-	return SquareMatrix<T, N>{
-		// TODO -> Implement
-	};
-}
-
-
-// TODO -> Use concepts to avoid type repetitions on specifications
-template<typename T, std::size_t N>
-SquareMatrix<T, N> operator+(const SquareMatrix<T, N>& a, const SquareMatrix<T, N>& b)
-{
-	return {
-		[&](std::size_t i, std::size_t j) {
-			return a.get(i, j) + b.get(i, j);
-		}
-	};
-}
-template<typename T, std::size_t N>
-SquareMatrix<T, N> operator-(const SquareMatrix<T, N>& a, const SquareMatrix<T, N>& b)
-{
-	return {
-		[&](std::size_t i, std::size_t j) {
-			return a.get(i, j) - b.get(i, j);
-		}
-	};
-}
-template<typename T, std::size_t N>
-SquareMatrix<T, N> operator*(const SquareMatrix<T, N>& m, T scalar)
-{
-	return {
-		[&](std::size_t i, std::size_t j){
-			return m.get(i, j) * scalar;
-		}
-	};
-}
-template<typename T, std::size_t N>
-SquareMatrix<T, N> operator*(T scalar, const SquareMatrix<T, N>& m)
-{
-	return m * scalar;
-}
-template<typename T, std::size_t N>
-SquareMatrix<T, N> operator/(const SquareMatrix<T, N>& m, T scalar)
-{
-	return {
-		[&](std::size_t i, std::size_t j){
-			return m.get(i, j) / scalar;
-		}
-	};
-}
-template<typename T, std::size_t N>
-SquareMatrix<T, N> operator/(T scalar, const SquareMatrix<T, N>& m)
-{
-	return {
-		[&](std::size_t i, std::size_t j){
-			return scalar / m.get(i, j);
-		}
-	};
-}
-template<typename T, std::size_t N>
-SquareMatrix<bool, N> operator==(const SquareMatrix<T, N>& a, const SquareMatrix<T, N>& b)
-{
-	return {
-		[&](std::size_t i, std::size_t j){
-			return a.get(i, j) == b.get(i, j);
-		}
-	};
-}
-template<typename T, std::size_t N>
-SquareMatrix<bool, N> operator!=(const SquareMatrix<T, N>& a, const SquareMatrix<T, N>& b)
-{
-	return {
-		[&](std::size_t i, std::size_t j){
-			return a.get(i, j) != b.get(i, j);
-		}
-	};
-}
-
-
-template <typename T> class Matrix2 : public SquareMatrix<T, 2>
-{
-public:
-	Matrix2() : SquareMatrix<T, 2>::matrix{ {0, 0}, {0, 0} } {}
-	Matrix2(std::initializer_list<std::initializer_list<T>> list)
-		: SquareMatrix<T, 2>(list) {}
-	Matrix2(std::initializer_list<Vector<T, 2>> il)
-		: SquareMatrix<T, 2>(il) {}
-	Matrix2(const std::function<T(std::size_t, std::size_t)>& f)
-		: SquareMatrix<T, 2>(f) {}
-public:
-	Matrix2& transpose()
-	{
-		std::swap(Matrix<T, 2, 2>::get(0, 1), Matrix<T, 2, 2>::get(1, 0));
-	}
-	Matrix2& invert()
-	{
-		T scalar = get_determinant();
-
-		if (scalar == 0)
-			throw SquareMatrix<T, 2>::matrix_determinant_error();
-
-		scalar = 1 / scalar;
-		// swap multiply
-		T tmp = Matrix<T, 2, 2>::get(0, 0) * scalar;
-		Matrix<T, 2, 2>::get(0, 0) = Matrix<T, 2, 2>::get(1, 1) * scalar;
-		Matrix<T, 2, 2>::get(1, 1) = tmp;
-
-		Matrix<T, 2, 2>::get(0, 1) *= -scalar;
-		Matrix<T, 2, 2>::get(1, 0) *= -scalar;
-	}
-	inline T get_determinant() const
-	{
-		return Matrix<T, 2, 2>::get(0, 0) * Matrix<T, 2, 2>::get(1, 1) \
-			 - Matrix<T, 2, 2>::get(1, 0) * Matrix<T, 2, 2>::get(0, 1);
-	}
-	inline Matrix2 get_adjoint()
-	{
-		return {
-			{ Matrix<T, 2, 2>::get(1, 1), -Matrix<T, 2, 2>::get(0, 1) },
-			{ -Matrix<T, 2, 2>::get(1, 0), Matrix<T, 2, 2>::get(0, 0) },
-		};
-	}
-	Matrix2 get_inverse()
-	{
-		T det = get_determinant();
-		if (det == 0)
-			throw SquareMatrix<T, 2>::matrix_determinant_error();
-		Matrix2 adj = get_adjoint();
-		adj *= 1 / det;
-
-		return adj;
-	}
-
-    inline double dot()
-	{
-		return Matrix<T, 2, 2>::get(0, 0) * Matrix<T, 2, 2>::get(0, 1) \
-		 	 + Matrix<T, 2, 2>::get(1, 0) * Matrix<T, 2, 2>::get(1, 1);
-	}
-};
-
-template <class T> using Matrix3 = SquareMatrix<T, 3>;
-template <class T> using Matrix4 = SquareMatrix<T, 4>;
-
 namespace Matrices {
+
 	template <typename T, std::size_t N>
-	SquareMatrix<T, N> I{
+	MatrixN<T, N> I{
 		[](std::size_t i, std::size_t j){
 			return i == j;
 		}
 	};
-}
 
-
+} // namespace Matrices
 
 
 } // namespace algebra

@@ -29,7 +29,7 @@ inline void print_sized(const Matrix<T, M, N> &m, const char *name)
 }
 
 template <typename T, std::size_t N>
-inline void print_sized(const SquareMatrix<T, N> &m, const char *name)
+inline void print_sized(const MatrixN<T, N> &m, const char *name)
 {
     std::cout << name << '[' << m.get_n() << "]: " << m << '\n';
 }
@@ -38,6 +38,7 @@ inline void print(void)
 {
 	std::cout << '\n';
 }
+
 inline void print(const char *s)
 {
 	std::cout << s << '\n';
@@ -50,7 +51,7 @@ inline void print(const T& obj, const char *name)
 }
 
 template<typename T, std::size_t N>
-inline void print(const SquareMatrix<T, N>& mat, const char *name)
+inline void print(const MatrixN<T, N>& mat, const char *name)
 {
 	std::cout << name << ": " << mat
 			// FIX -> determinant function
@@ -169,18 +170,18 @@ int main()
 	Vector<std::complex<double>, 3>v3 { 2.0i + 1., 1.0i + 2., 3 };
 
 	// TODO -> Try adding deduction guides.
-	SquareMatrix<int, 2> S { coord2d, coords2d_ops };
-	SquareMatrix<int, 3> transform {
+	MatrixN<int, 2> S { coord2d, coords2d_ops };
+	MatrixN<int, 3> transform {
 		{4, 5, 0},
 		{-4, -2, 0},
 		{8, 7, 13}
 	};
-	SquareMatrix<float, 3> M {
+	Matrix3<float> M {
 		[](std::size_t i, std::size_t j){
 			return i * 3 + j + 1;
 		}
 	};
-	SquareMatrix<double, 2> O;
+	Matrix2<double> O;
 
 	Matrix<int, 2, 3> A;
 	A.get(0, 0) = -1;
@@ -224,12 +225,12 @@ int main()
 	print("\nUsing Matrices");
 	use(Q, R);
 
-	// Matrix<int, 4, 5> mat;
+	Matrix<int, 4, 5> mat;
 	print_sized(mat, "MAT");
 	mat.fill([](int i, int j) { return 2 * (i + 1) + 3 * (j + 1); });
 	print(mat, "MAT");
 	
-	Matrix<int, 4, 4> mat4;
+	Matrix4<int> mat4;
 	mat4.fill([](int i, int j) { return -(i + 1) + 4 * (j + 1); });
 	std::cout << mat4 << std::endl;
 
